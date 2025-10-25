@@ -30,6 +30,10 @@ import type { CustomResolverOptions } from '@expo/metro/metro-resolver';
 import { SerialAsset } from '@expo/metro-config/build/serializer/serializerAssets';
 import assert from 'assert';
 import chalk from 'chalk';
+import {
+  type RouteInfo,
+  type RoutesManifest,
+} from 'expo-server/private';
 import path from 'path';
 import resolveFrom from 'resolve-from';
 
@@ -39,8 +43,6 @@ import {
 } from './createServerComponentsMiddleware';
 import { createRouteHandlerMiddleware } from './createServerRouteMiddleware';
 import {
-  type ExpoRouterServerManifestV1,
-  type ExpoRouterServerManifestV1Route,
   fetchManifest,
   inflateManifest,
 } from './fetchRouterManifest';
@@ -223,7 +225,7 @@ export class MetroBundlerDevServer extends BundlerDevServer {
     platform,
     includeSourceMaps,
   }: {
-    manifest: ExpoRouterServerManifestV1;
+    manifest: RoutesManifest;
     appDir: string;
     outputDir: string;
     files: ExportAssetMap;
@@ -263,9 +265,9 @@ export class MetroBundlerDevServer extends BundlerDevServer {
     includeSourceMaps?: boolean;
     outputDir: string;
     // This does not contain the API routes info.
-    prerenderManifest: ExpoRouterServerManifestV1;
+    prerenderManifest: RoutesManifest;
     platform: string;
-  }): Promise<{ files: ExportAssetMap; manifest: ExpoRouterServerManifestV1<string> }> {
+  }): Promise<{ files: ExportAssetMap; manifest: RoutesManifest<string> }> {
     const { routerRoot } = this.instanceMetroOptions;
     assert(
       routerRoot != null,
@@ -359,7 +361,7 @@ export class MetroBundlerDevServer extends BundlerDevServer {
   }
 
   async getServerManifestAsync(): Promise<{
-    serverManifest: ExpoRouterServerManifestV1;
+    serverManifest: RoutesManifest;
     htmlManifest: ExpoRouterRuntimeManifest;
   }> {
     const { exp } = getConfig(this.projectRoot);
@@ -381,7 +383,7 @@ export class MetroBundlerDevServer extends BundlerDevServer {
    * This function is invoked when exporting via `expo export`
    */
   async getStaticRenderFunctionAsync(): Promise<{
-    serverManifest: ExpoRouterServerManifestV1;
+    serverManifest: RoutesManifest;
     manifest: ExpoRouterRuntimeManifest;
     renderAsync: (path: string) => Promise<string>;
   }> {
@@ -462,7 +464,7 @@ export class MetroBundlerDevServer extends BundlerDevServer {
    */
   private async getStaticPageAsync(
     pathname: string,
-    route: ExpoRouterServerManifestV1Route<RegExp>
+    route: RouteInfo<RegExp>
   ) {
     const { exp } = getConfig(this.projectRoot);
     const { mode, isExporting, clientBoundaries, baseUrl, reactCompiler, routerRoot, asyncRoutes } =
@@ -1159,7 +1161,7 @@ export class MetroBundlerDevServer extends BundlerDevServer {
           const loaderModuleMiddleware = new DataLoaderModuleMiddleware(
             this.projectRoot,
             appDir,
-            async (location: URL, route: ExpoRouterServerManifestV1Route<RegExp>) => {
+            async (location: URL, route: RouteInfo<RegExp>) => {
               return this.executeServerDataLoaderAsync(location, route);
             },
             () => this.getDevServerUrlOrAssert()
@@ -1564,7 +1566,7 @@ export class MetroBundlerDevServer extends BundlerDevServer {
    */
   async executeServerDataLoaderAsync(
     location: URL,
-    route: ExpoRouterServerManifestV1Route<RegExp>
+    route: RouteInfo<RegExp>
   ): Promise<Record<string, any> | undefined> {
     const { exp } = getConfig(this.projectRoot);
     const { unstable_useServerDataLoaders } = exp.extra?.router;
